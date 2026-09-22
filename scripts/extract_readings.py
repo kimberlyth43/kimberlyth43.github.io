@@ -14,6 +14,9 @@ import re
 import subprocess
 import zipfile
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import rich_docx
 from xml.etree import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -390,7 +393,7 @@ def write_map(statuses: dict[str, str], sources: dict[str, str]) -> None:
         "mens-preconference-2": "No manuscript on hand; cue/prior reading.",
         "put-your-name-on-something": "Skip First Draft / Explanatory Outline; start at Heading Introduction; keep sermon section headings.",
         "from-confusion-to-obedience": "PDF; section titles (Introduction, Review, Correcting, …) → h2.",
-        "build-and-fight": "No Word heading styles; ALL-CAPS section labels promoted to h2.",
+        "build-and-fight": "Use second manuscript copy after Titus 2 note (closer to video cues); never both tabs. ALL-CAPS → h2; lists/strong preserved.",
     }
     lines = [
         "# Speaking transcript sources",
@@ -472,32 +475,33 @@ def process_slug(slug: str, source: str, title: str | None) -> str:
         return f"txt paras={len(paras)}"
 
     if path.suffix.lower() == ".docx":
-        paras = extract_docx(path)
-        blocks = blocks_from_docx(
-            paras,
+        promote = slug in PROMOTE_CAPS or slug == "build-and-fight"
+        skip = slug in SKIP_OUTLINE
+        blocks, footnotes = rich_docx.extract_rich_docx(
+            path,
             page_title=title,
-            skip_outline=slug in SKIP_OUTLINE,
-            promote_caps=slug in PROMOTE_CAPS or (
-                slug not in SKIP_OUTLINE and not has_heading_styles(paras)
-                and any(is_all_caps_heading(t) for _, t in paras)
-            ),
+            slug=slug,
+            skip_outline=skip,
+            promote_caps=promote,
         )
-        # For docs with no heading styles and no caps: try promoting PDF_H2 words
+        # Promote known section words if still flat
         if not any(t in {"h2", "h3"} for t, _ in blocks):
             fixed = []
-            for tag, text in blocks:
-                low = text.strip().lower().rstrip(":")
-                if tag == "p" and low in PDF_H2 and len(text) <= 40:
-                    fixed.append(("h2", text.strip().rstrip(":")))
-                elif tag == "p" and low in PDF_H3 and len(text) <= 40:
-                    fixed.append(("h3", text.strip().rstrip(":")))
+            for tag, content in blocks:
+                plain = re.sub(r"<[^>]+>", "", content).strip()
+                low = plain.lower().rstrip(":")
+                if tag == "p" and low in PDF_H2 and len(plain) <= 40:
+                    fixed.append(("h2", plain.rstrip(":")))
+                elif tag == "p" and low in PDF_H3 and len(plain) <= 40:
+                    fixed.append(("h3", plain.rstrip(":")))
                 else:
-                    fixed.append((tag, text))
+                    fixed.append((tag, content))
             blocks = fixed
-        write_reading(out, blocks)
+        rich_docx.write_rich_reading(out, blocks, footnotes)
         nh = sum(1 for t, _ in blocks if t in {"h2", "h3"})
-        return f"docx headings={nh} blocks={len(blocks)}"
-
+        nl = sum(1 for t, _ in blocks if t in {"ul", "ol"})
+        ns = sum(content.count("<strong>") for _, content in blocks)
+        return f"docx headings={nh} lists={nl} strong={ns} fn={len(footnotes)} blocks={len(blocks)}"
     return f"unknown {src}"
 
 

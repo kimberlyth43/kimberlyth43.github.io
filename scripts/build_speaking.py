@@ -475,7 +475,7 @@ def reading_block(slug: str) -> str:
         return ""
     return """      <section class="reading-transcript" aria-labelledby="reading-h">
         <h2 id="reading-h">Transcript</h2>
-        <p class="reading-note">A cleaned reading copy for following along on the page.</p>
+        <p class="reading-note">Cleaned up copy.</p>
         %s
       </section>""" % body
 
