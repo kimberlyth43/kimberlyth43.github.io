@@ -18,19 +18,12 @@ jobs:
           set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
-          import re
-          # Patch style.css
           css_path = Path("style.css")
           if css_path.exists():
               css = css_path.read_text()
               css2 = css.replace(".art-head { padding: 22px 0 8px; }", ".art-head { padding: 28px 0 18px; }")
               old = "  .speaking-talk h1.art-title { margin-top: 0; }"
-              new = """  .speaking-talk h1.art-title {
-    margin-top: 14px;
-    margin-bottom: 0;
-    line-height: 1.15;
-  }
-  .speaking-talk .art-byline { margin-top: 18px; }"""
+              new = "  .speaking-talk h1.art-title {\n    margin-top: 14px;\n    margin-bottom: 0;\n    line-height: 1.15;\n  }\n  .speaking-talk .art-byline { margin-top: 18px; }"
               if old in css2:
                   css2 = css2.replace(old, new)
               if css2 != css:
@@ -38,19 +31,14 @@ jobs:
                   print("patched style.css")
               else:
                   print("style.css already patched or pattern missing")
-          # Inject talk-header.css link into speaking pages
           link = '<link rel="stylesheet" href="/speaking/talk-header.css">'
           for html in Path("speaking").rglob("*.html"):
               t = html.read_text()
               if "talk-header.css" in t:
                   continue
-              if '<link rel="stylesheet" href="/style.css">' in t:
-                  t2 = t.replace(
-                      '<link rel="stylesheet" href="/style.css">',
-                      '<link rel="stylesheet" href="/style.css">\n' + link,
-                      1,
-                  )
-                  html.write_text(t2)
+              needle = '<link rel="stylesheet" href="/style.css">'
+              if needle in t:
+                  html.write_text(t.replace(needle, needle + "\n" + link, 1))
                   print("linked", html)
           PY
       - name: Decode speaking-deploy and commit
@@ -77,7 +65,6 @@ jobs:
               (dep / ".incomplete").write_text("\n".join(missing))
               sys.exit(0)
           raw = "".join((dep / p).read_text().strip() for p in parts)
-          # support hex (case-insensitive) or base64
           if parts[0].endswith(".hex"):
               data = binascii.unhexlify(raw.lower())
               print("decoded hex", len(data))
@@ -91,7 +78,7 @@ jobs:
           (dep / ".extract-ok").write_text("ok\n")
           PY
           if [[ -f speaking-deploy/.incomplete ]]; then
-            echo "Incomplete parts; leaving speaking-deploy intact; still commit CSS if any"
+            echo "Incomplete parts; commit CSS if any"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add style.css speaking || true
