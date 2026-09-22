@@ -431,11 +431,7 @@ def index_page(talks: list[dict]) -> str:
   <div class="shell">
 {MASTHEAD}
 {tabs("Speaking")}
-    <section class="speaking" aria-labelledby="speaking-h">
-      <header class="page-head">
-        <h1 class="page-title" id="speaking-h">Speaking</h1>
-        <p class="speaking-intro">Sermons and talks from Christ the King Church in Stillwater, newest first. The transcript on each page follows the video.</p>
-      </header>
+    <section class="speaking" aria-label="Speaking">
     <ul class="speaking-list">
 {body}
     </ul>
