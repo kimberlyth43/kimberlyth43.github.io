@@ -68,7 +68,7 @@ jobs:
           fi
           python3 <<'PY'
           import base64, pathlib, tarfile, io, sys, binascii
-          root = pathlib. Path(".")
+          root = pathlib.Path(".")
           dep = root / "speaking-deploy"
           parts = [ln.strip() for ln in (dep / "PARTS.txt").read_text().splitlines() if ln.strip()]
           missing = [p for p in parts if not (dep / p).exists()]
