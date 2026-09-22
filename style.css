@@ -309,7 +309,7 @@
   }
   .backlink:hover { color: var(--accent); }
 
-  .art-head { padding: 22px 0 8px; }
+  .art-head { padding: 28px 0 18px; }
   .art-meta { font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.03em; color: var(--muted); display: flex; gap: 10px; margin-bottom: 26px; }
   .art-meta .tag { color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; }
 
@@ -434,7 +434,12 @@
   }
 
   .shell-talk { max-width: 1080px; }
-  .speaking-talk h1.art-title { margin-top: 0; }
+  .speaking-talk h1.art-title {
+    margin-top: 14px;
+    margin-bottom: 0;
+    line-height: 1.15;
+  }
+  .speaking-talk .art-byline { margin-top: 18px; }
   .speaking-kicker {
     color: var(--ink-soft); font-size: 18.5px; line-height: 1.5; margin: -8px 0 0;
   }
