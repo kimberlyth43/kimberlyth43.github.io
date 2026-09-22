@@ -23,12 +23,12 @@ jobs:
           parts = [ln.strip() for ln in (dep / "PARTS.txt").read_text().splitlines() if ln.strip()]
           missing = [p for p in parts if not (dep / p).exists()]
           if missing:
-              print("missing", missing); raise SystemExit(0)
+              print("missing", len(missing), missing[:5], "..."); raise SystemExit(0)
           b64 = "".join((dep / p).read_text().strip() for p in parts)
           data = base64.b64decode(b64)
           with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
               tar.extractall(root)
-              print("extracted", len(tar.getmembers()))
+              print("extracted", len(tar.getmembers()), tar.getnames())
           PY
           rm -rf speaking-deploy
           git config user.name "github-actions[bot]"
