@@ -1,1 +1,1 @@
-@file:///workspace/preview-site/scripts/build_speaking.py
+PLACEHOLDER
