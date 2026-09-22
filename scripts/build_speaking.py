@@ -463,6 +463,22 @@ def cue_count(slug: str) -> int:
     return sum(1 for cue in data if isinstance(cue, dict) and cue.get("text"))
 
 
+
+
+
+def reading_block(slug: str) -> str:
+    path = SPEAKING / slug / "reading.html"
+    if not path.exists():
+        return ""
+    body = path.read_text(encoding="utf-8").strip()
+    if not body:
+        return ""
+    return """      <section class="reading-transcript" aria-labelledby="reading-h">
+        <h2 id="reading-h">Transcript</h2>
+        <p class="reading-note">A cleaned reading copy for following along on the page.</p>
+        %s
+      </section>""" % body
+
 def talk_page(talk: dict) -> str:
     title = talk["title"]
     kind = "Conference" if talk["kind"] == "conference" else "Sermon"
@@ -486,7 +502,7 @@ def talk_page(talk: dict) -> str:
         </div>
         <section class="transcript" id="transcript" aria-labelledby="transcript-h">
           <div class="transcript-bar">
-            <h2 id="transcript-h">Transcript</h2>
+            <h2 id="transcript-h">Follow along</h2>
             <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
           </div>
           <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
@@ -505,7 +521,7 @@ def talk_page(talk: dict) -> str:
         </div>
         <section class="transcript" id="transcript" aria-labelledby="transcript-h">
           <div class="transcript-bar">
-            <h2 id="transcript-h">Transcript</h2>
+            <h2 id="transcript-h">Follow along</h2>
           </div>
           <p class="transcript-fallback">No captions are available for this talk yet. The video still plays above.</p>
         </section>
@@ -530,6 +546,7 @@ def talk_page(talk: dict) -> str:
       <p class="speaking-kicker">{esc(kicker)}</p>
       <div class="rule"></div>
 {stage}
+{reading_block(talk["slug"])}
       <p class="speaking-note">Watch on <a href="{esc(watch)}" target="_blank" rel="noopener">YouTube</a>.</p>
     </article>
     <footer class="home-foot">© 2026 Nathan Colestock</footer>
