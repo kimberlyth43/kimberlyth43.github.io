@@ -15,21 +15,35 @@ jobs:
       - name: Decode and commit
         run: |
           set -euo pipefail
-          test -f speaking-deploy/PARTS.txt
-          python3 - <<'PY'
-          import base64, pathlib, tarfile, io
+          if [[ ! -f speaking-deploy/PARTS.txt ]]; then
+            echo "No PARTS.txt yet; nothing to apply"
+            exit 0
+          fi
+          python3 <<'PY'
+          import base64, pathlib, tarfile, io, sys
           root = pathlib.Path(".")
           dep = root / "speaking-deploy"
           parts = [ln.strip() for ln in (dep / "PARTS.txt").read_text().splitlines() if ln.strip()]
           missing = [p for p in parts if not (dep / p).exists()]
           if missing:
-              print("missing", len(missing), missing[:5], "..."); raise SystemExit(0)
+              print("INCOMPLETE missing", len(missing), missing[:8])
+              (dep / ".incomplete").write_text("\n".join(missing))
+              sys.exit(0)
           b64 = "".join((dep / p).read_text().strip() for p in parts)
           data = base64.b64decode(b64)
           with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+              names = tar.getnames()
               tar.extractall(root)
-              print("extracted", len(tar.getmembers()), tar.getnames())
+              print("extracted", len(names))
+              for n in names[:30]:
+                  print(" ", n)
+          (dep / ".extract-ok").write_text("ok\n")
           PY
+          if [[ -f speaking-deploy/.incomplete ]]; then
+            echo "Incomplete parts; leaving speaking-deploy intact"
+            exit 0
+          fi
+          test -f speaking-deploy/.extract-ok
           rm -rf speaking-deploy
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
