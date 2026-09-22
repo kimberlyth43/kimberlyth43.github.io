@@ -1,0 +1,38 @@
+name: Apply speaking b64 parts
+on:
+  push:
+    paths:
+      - "speaking-bundle/part-*.json"
+      - ".github/workflows/apply-speaking-b64.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode parts and commit
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, json, pathlib
+          root = pathlib.Path(".")
+          bundle = root / "speaking-bundle"
+          if not bundle.exists():
+              print("no bundle"); raise SystemExit(0)
+          for part in sorted(bundle.glob("part-*.json")):
+              data = json.loads(part.read_text())
+              for rel, b64 in data.items():
+                  path = root / rel
+                  path.parent.mkdir(parents=True, exist_ok=True)
+                  path.write_bytes(base64.b64decode(b64))
+                  print("wrote", rel, path.stat().st_size)
+          PY
+          rm -rf speaking-bundle
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Speaking: transcript under video; manuscript headings in readings"
+          git push
