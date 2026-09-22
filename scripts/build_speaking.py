@@ -253,17 +253,25 @@ TALK_JS = r"""<script>
       }
     });
   }
-  window.onYouTubeIframeAPIReady = function () {
+  function mountPlayer() {
+    if (player || !window.YT || !YT.Player) return;
     player = new YT.Player("yt-player", {
-      videoId: VIDEO_ID,
-      playerVars: { rel: 0, playsinline: 1, modestbranding: 1 },
       events: { onReady: tick, onStateChange: tick }
     });
     setInterval(tick, 250);
-  };
-  var api = document.createElement("script");
-  api.src = "https://www.youtube.com/iframe_api";
-  document.head.appendChild(api);
+  }
+  if (window.YT && YT.Player) {
+    mountPlayer();
+  } else {
+    var prior = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function () {
+      if (typeof prior === "function") prior();
+      mountPlayer();
+    };
+    var api = document.createElement("script");
+    api.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(api);
+  }
   fetch("transcript.json", { credentials: "same-origin" })
     .then(function (res) { if (!res.ok) throw new Error("missing"); return res.json(); })
     .then(render)
@@ -474,7 +482,7 @@ def talk_page(talk: dict) -> str:
     if has_cues:
         stage = f"""      <div class="talk-stage">
         <div class="video-wrap">
-          <div id="yt-player"></div>
+          <iframe id="yt-player" src="https://www.youtube.com/embed/{esc(video)}?enablejsapi=1&rel=0&playsinline=1" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
         <section class="transcript" id="transcript" aria-labelledby="transcript-h">
           <div class="transcript-bar">
