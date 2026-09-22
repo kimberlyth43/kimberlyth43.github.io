@@ -3,6 +3,8 @@
 
 Source of truth: manuscripts/MAP.md
   python3 scripts/extract_readings.py
+Then promote leftover ALL-CAPS / bold section titles (and sparse cue headings):
+  python3 scripts/promote_headings.py
 Then rebuild pages:
   python3 scripts/build_speaking.py
 """

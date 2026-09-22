@@ -136,8 +136,12 @@ TALK_JS = r"""<script>
   var scrollLock = 0;
   var panel = document.getElementById("transcript-scroll");
   var hint = document.getElementById("transcript-hint");
+  var stage = document.getElementById("talk-stage");
+  var follow = document.getElementById("transcript");
+  var collapseBtn = document.getElementById("follow-collapse");
   var smooth = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var FALLBACK = "No captions are available for this talk yet. The video still plays above.";
+  var followOpened = false;
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function fmt(t) {
@@ -147,6 +151,18 @@ TALK_JS = r"""<script>
     var s = t % 60;
     if (h) return h + ":" + pad(m) + ":" + pad(s);
     return m + ":" + pad(s);
+  }
+  function openFollow() {
+    if (!stage || !follow || followOpened) return;
+    follow.hidden = false;
+    stage.classList.add("is-follow-open");
+    followOpened = true;
+  }
+  function collapseFollow() {
+    if (!stage || !follow) return;
+    follow.hidden = true;
+    stage.classList.remove("is-follow-open");
+    followOpened = false;
   }
   function showFallback(message) {
     if (hint) hint.textContent = message;
@@ -210,6 +226,10 @@ TALK_JS = r"""<script>
     if (typeof t !== "number" || isNaN(t)) return;
     setActive(findCue(t), false);
   }
+  function onStateChange(ev) {
+    try { if (ev && ev.data === 1) openFollow(); } catch (e) {}
+    tick();
+  }
   function render(list) {
     if (!Array.isArray(list)) list = [];
     cues = list.filter(function (c) {
@@ -231,6 +251,7 @@ TALK_JS = r"""<script>
       btn.appendChild(time);
       btn.appendChild(text);
       btn.addEventListener("click", function () {
+        openFollow();
         setActive(i, true);
         scrollLock = Date.now() + 1600;
         if (player && typeof player.seekTo === "function") {
@@ -242,6 +263,9 @@ TALK_JS = r"""<script>
       return btn;
     });
     tick();
+  }
+  if (collapseBtn) {
+    collapseBtn.addEventListener("click", function () { collapseFollow(); });
   }
   if (panel) {
     ["wheel", "touchstart", "pointerdown"].forEach(function (name) {
@@ -256,7 +280,7 @@ TALK_JS = r"""<script>
   function mountPlayer() {
     if (player || !window.YT || !YT.Player) return;
     player = new YT.Player("yt-player", {
-      events: { onReady: tick, onStateChange: tick }
+      events: { onReady: tick, onStateChange: onStateChange }
     });
     setInterval(tick, 250);
   }
@@ -277,7 +301,8 @@ TALK_JS = r"""<script>
     .then(render)
     .catch(function () { showFallback(FALLBACK); });
 })();
-</script>"""
+</script>
+"""
 
 
 def esc(value: str) -> str:
@@ -474,7 +499,7 @@ def reading_block(slug: str) -> str:
     if not body:
         return ""
     return """      <section class="reading-transcript" aria-labelledby="reading-h">
-        <h2 id="reading-h">Transcript</h2>
+        <h2 id="reading-h">Written Transcript</h2>
         <p class="reading-note">Cleaned up copy.</p>
         %s
       </section>""" % body
@@ -496,38 +521,34 @@ def talk_page(talk: dict) -> str:
     watch = f"https://www.youtube.com/watch?v={video}"
     has_cues = cue_count(talk["slug"]) > 0
     if has_cues:
-        video_block = f"""      <div class="talk-stage">
+        stage_block = f"""      <div class="talk-stage" id="talk-stage">
         <div class="video-wrap">
           <iframe id="yt-player" src="https://www.youtube.com/embed/{esc(video)}?enablejsapi=1&rel=0&playsinline=1" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
+        <section class="transcript follow-panel" id="transcript" aria-labelledby="transcript-h" hidden>
+          <div class="transcript-bar">
+            <div class="transcript-bar-row">
+              <h2 id="transcript-h">Follow along</h2>
+              <button type="button" class="follow-collapse" id="follow-collapse">Collapse</button>
+            </div>
+            <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
+          </div>
+          <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Follow-along lines"></div>
+        </section>
       </div>
       <noscript>
         <div class="video-wrap">
           <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
       </noscript>"""
-        follow_block = f"""      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-        <div class="transcript-bar">
-          <h2 id="transcript-h">Follow along</h2>
-          <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
-        </div>
-        <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
-      </section>"""
         player = "\n" + TALK_JS.replace("__VIDEO_ID__", video)
     else:
-        video_block = f"""      <div class="talk-stage">
+        stage_block = f"""      <div class="talk-stage" id="talk-stage">
         <div class="video-wrap">
           <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
       </div>"""
-        follow_block = f"""      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-        <div class="transcript-bar">
-          <h2 id="transcript-h">Follow along</h2>
-        </div>
-        <p class="transcript-fallback">No captions are available for this talk yet. The video still plays above.</p>
-      </section>"""
         player = ""
-    # Keep template below unchanged except stage → video + reading + follow
 
     return f"""{head(title, description, f"/speaking/{talk['slug']}/")}
 <body>
@@ -547,9 +568,8 @@ def talk_page(talk: dict) -> str:
       </header>
       <p class="speaking-kicker">{esc(kicker)}</p>
       <div class="rule"></div>
-{video_block}
+{stage_block}
 {reading_block(talk["slug"])}
-{follow_block}
       <p class="speaking-note">Watch on <a href="{esc(watch)}" target="_blank" rel="noopener">YouTube</a>.</p>
     </article>
     <footer class="home-foot">© 2026 Nathan Colestock</footer>
@@ -557,6 +577,7 @@ def talk_page(talk: dict) -> str:
 </main>
 {player}
 {chrome_close()}"""
+
 
 
 def write(path: Path, text: str) -> None:

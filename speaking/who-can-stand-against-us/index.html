@@ -40,10 +40,20 @@
       </header>
       <p class="speaking-kicker">Preached August 24, 2025 at Christ the King Church in Stillwater.</p>
       <div class="rule"></div>
-      <div class="talk-stage">
+      <div class="talk-stage" id="talk-stage">
         <div class="video-wrap">
           <iframe id="yt-player" src="https://www.youtube.com/embed/7oKdh_eeg-s?enablejsapi=1&rel=0&playsinline=1" title="Who Can Stand Against Us?" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
+        <section class="transcript follow-panel" id="transcript" aria-labelledby="transcript-h" hidden>
+          <div class="transcript-bar">
+            <div class="transcript-bar-row">
+              <h2 id="transcript-h">Follow along</h2>
+              <button type="button" class="follow-collapse" id="follow-collapse">Collapse</button>
+            </div>
+            <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
+          </div>
+          <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Follow-along lines"></div>
+        </section>
       </div>
       <noscript>
         <div class="video-wrap">
@@ -51,7 +61,7 @@
         </div>
       </noscript>
       <section class="reading-transcript" aria-labelledby="reading-h">
-        <h2 id="reading-h">Transcript</h2>
+        <h2 id="reading-h">Written Transcript</h2>
         <p class="reading-note">Cleaned up copy.</p>
         <div class="reading-body">
 <p><strong>Who Can Stand Against Us?</strong></p>
@@ -105,13 +115,6 @@
 <p>Please pray with me. Heavenly Father, we ask for your help as we look to strengthen our hands and continue to build. We need your wisdom, we need your power. We know that unless the Lord builds the house, those who build it labor in vain. And so Father, would you please help us? We don't want to live in this kind of derision; it does not make you look glorious, and you are the God who is deserving of all glory, honor, power, and confidence forever. So please help us to live that and proclaim it to the community that we live in. Amen. Amen.</p>
 </div>
       </section>
-      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-        <div class="transcript-bar">
-          <h2 id="transcript-h">Follow along</h2>
-          <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
-        </div>
-        <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
-      </section>
       <p class="speaking-note">Watch on <a href="https://www.youtube.com/watch?v=7oKdh_eeg-s" target="_blank" rel="noopener">YouTube</a>.</p>
     </article>
     <footer class="home-foot">© 2026 Nathan Colestock</footer>
@@ -128,8 +131,12 @@
   var scrollLock = 0;
   var panel = document.getElementById("transcript-scroll");
   var hint = document.getElementById("transcript-hint");
+  var stage = document.getElementById("talk-stage");
+  var follow = document.getElementById("transcript");
+  var collapseBtn = document.getElementById("follow-collapse");
   var smooth = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   var FALLBACK = "No captions are available for this talk yet. The video still plays above.";
+  var followOpened = false;
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function fmt(t) {
@@ -139,6 +146,18 @@
     var s = t % 60;
     if (h) return h + ":" + pad(m) + ":" + pad(s);
     return m + ":" + pad(s);
+  }
+  function openFollow() {
+    if (!stage || !follow || followOpened) return;
+    follow.hidden = false;
+    stage.classList.add("is-follow-open");
+    followOpened = true;
+  }
+  function collapseFollow() {
+    if (!stage || !follow) return;
+    follow.hidden = true;
+    stage.classList.remove("is-follow-open");
+    followOpened = false;
   }
   function showFallback(message) {
     if (hint) hint.textContent = message;
@@ -202,6 +221,10 @@
     if (typeof t !== "number" || isNaN(t)) return;
     setActive(findCue(t), false);
   }
+  function onStateChange(ev) {
+    try { if (ev && ev.data === 1) openFollow(); } catch (e) {}
+    tick();
+  }
   function render(list) {
     if (!Array.isArray(list)) list = [];
     cues = list.filter(function (c) {
@@ -223,6 +246,7 @@
       btn.appendChild(time);
       btn.appendChild(text);
       btn.addEventListener("click", function () {
+        openFollow();
         setActive(i, true);
         scrollLock = Date.now() + 1600;
         if (player && typeof player.seekTo === "function") {
@@ -234,6 +258,9 @@
       return btn;
     });
     tick();
+  }
+  if (collapseBtn) {
+    collapseBtn.addEventListener("click", function () { collapseFollow(); });
   }
   if (panel) {
     ["wheel", "touchstart", "pointerdown"].forEach(function (name) {
@@ -248,7 +275,7 @@
   function mountPlayer() {
     if (player || !window.YT || !YT.Player) return;
     player = new YT.Player("yt-player", {
-      events: { onReady: tick, onStateChange: tick }
+      events: { onReady: tick, onStateChange: onStateChange }
     });
     setInterval(tick, 250);
   }
@@ -270,6 +297,7 @@
     .catch(function () { showFallback(FALLBACK); });
 })();
 </script>
+
 <script>
   (function () {
     var root = document.documentElement;
