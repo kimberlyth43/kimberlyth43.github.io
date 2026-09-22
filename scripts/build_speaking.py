@@ -496,37 +496,39 @@ def talk_page(talk: dict) -> str:
     watch = f"https://www.youtube.com/watch?v={video}"
     has_cues = cue_count(talk["slug"]) > 0
     if has_cues:
-        stage = f"""      <div class="talk-stage">
+        video_block = f"""      <div class="talk-stage">
         <div class="video-wrap">
           <iframe id="yt-player" src="https://www.youtube.com/embed/{esc(video)}?enablejsapi=1&rel=0&playsinline=1" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
-        <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-          <div class="transcript-bar">
-            <h2 id="transcript-h">Follow along</h2>
-            <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
-          </div>
-          <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
-        </section>
       </div>
       <noscript>
         <div class="video-wrap">
           <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
       </noscript>"""
+        follow_block = f"""      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
+        <div class="transcript-bar">
+          <h2 id="transcript-h">Follow along</h2>
+          <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
+        </div>
+        <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
+      </section>"""
         player = "\n" + TALK_JS.replace("__VIDEO_ID__", video)
     else:
-        stage = f"""      <div class="talk-stage">
+        video_block = f"""      <div class="talk-stage">
         <div class="video-wrap">
           <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
         </div>
-        <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-          <div class="transcript-bar">
-            <h2 id="transcript-h">Follow along</h2>
-          </div>
-          <p class="transcript-fallback">No captions are available for this talk yet. The video still plays above.</p>
-        </section>
       </div>"""
+        follow_block = f"""      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
+        <div class="transcript-bar">
+          <h2 id="transcript-h">Follow along</h2>
+        </div>
+        <p class="transcript-fallback">No captions are available for this talk yet. The video still plays above.</p>
+      </section>"""
         player = ""
+    # Keep template below unchanged except stage → video + reading + follow
+
     return f"""{head(title, description, f"/speaking/{talk['slug']}/")}
 <body>
 <div id="mapbg" aria-hidden="true"></div>
@@ -545,8 +547,9 @@ def talk_page(talk: dict) -> str:
       </header>
       <p class="speaking-kicker">{esc(kicker)}</p>
       <div class="rule"></div>
-{stage}
+{video_block}
 {reading_block(talk["slug"])}
+{follow_block}
       <p class="speaking-note">Watch on <a href="{esc(watch)}" target="_blank" rel="noopener">YouTube</a>.</p>
     </article>
     <footer class="home-foot">© 2026 Nathan Colestock</footer>
