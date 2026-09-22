@@ -1,0 +1,39 @@
+name: Apply speaking-deploy
+on:
+  push:
+    paths:
+      - "speaking-deploy/**"
+      - ".github/workflows/apply-speaking-deploy.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode and commit
+        run: |
+          set -euo pipefail
+          test -f speaking-deploy/PARTS.txt
+          python3 - <<'PY'
+          import base64, pathlib, tarfile, io
+          root = pathlib.Path(".")
+          dep = root / "speaking-deploy"
+          parts = [ln.strip() for ln in (dep / "PARTS.txt").read_text().splitlines() if ln.strip()]
+          missing = [p for p in parts if not (dep / p).exists()]
+          if missing:
+              print("missing", missing); raise SystemExit(0)
+          b64 = "".join((dep / p).read_text().strip() for p in parts)
+          data = base64.b64decode(b64)
+          with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+              tar.extractall(root)
+              print("extracted", len(tar.getmembers()))
+          PY
+          rm -rf speaking-deploy
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Speaking: transcript under video; manuscript headings in readings"
+          git push
