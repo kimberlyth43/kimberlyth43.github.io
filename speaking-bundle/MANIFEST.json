@@ -1,0 +1,38 @@
+[
+  {
+    "path": "scripts/extract_readings.py",
+    "parts": ["p000.b64", "p001.b64", "p002.b64", "p003.b64"]
+  },
+  {
+    "path": "scripts/build_speaking.py",
+    "parts": ["p004.b64", "p005.b64", "p006.b64", "p007.b64"]
+  },
+  {
+    "path": "style.css",
+    "parts": ["p008.b64", "p009.b64", "p010.b64", "p011.b64", "p012.b64", "p013.b64", "p014.b64", "p015.b64", "p016.b64", "p017.b64", "p018.b64", "p019.b64", "p020.b64", "p021.b64", "p022.b64", "p023.b64", "p024.b64", "p025.b64", "p026.b64", "p027.b64", "p028.b64", "p029.b64", "p030.b64", "p031.b64"]
+  },
+  {
+    "path": "speaking/guard-the-gates/reading.html",
+    "parts": ["p032.b64", "p033.b64", "p034.b64", "p035.b64", "p036.b64", "p037.b64"]
+  },
+  {
+    "path": "speaking/guard-the-gates/index.html",
+    "parts": ["p038.b64", "p039.b64", "p040.b64", "p041.b64", "p042.b64", "p043.b64", "p044.b64"]
+  },
+  {
+    "path": "speaking/from-confusion-to-obedience/reading.html",
+    "parts": ["p045.b64", "p046.b64", "p047.b64", "p048.b64", "p049.b64", "p050.b64"]
+  },
+  {
+    "path": "speaking/from-confusion-to-obedience/index.html",
+    "parts": ["p051.b64", "p052.b64", "p053.b64", "p054.b64", "p055.b64", "p056.b64", "p057.b64"]
+  },
+  {
+    "path": "manuscripts/MAP.md",
+    "parts": ["p058.b64"]
+  },
+  {
+    "path": "MAP.md",
+    "parts": ["p059.b64"]
+  }
+]

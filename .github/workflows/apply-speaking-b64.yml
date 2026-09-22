@@ -2,7 +2,7 @@ name: Apply speaking b64 parts
 on:
   push:
     paths:
-      - "speaking-bundle/part-*.json"
+      - "speaking-bundle/**"
       - ".github/workflows/apply-speaking-b64.yml"
   workflow_dispatch:
 permissions:
@@ -12,22 +12,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decode parts and commit
+      - name: Decode MANIFEST and commit
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import base64, json, pathlib
           root = pathlib.Path(".")
           bundle = root / "speaking-bundle"
-          if not bundle.exists():
-              print("no bundle"); raise SystemExit(0)
-          for part in sorted(bundle.glob("part-*.json")):
-              data = json.loads(part.read_text())
-              for rel, b64 in data.items():
-                  path = root / rel
-                  path.parent.mkdir(parents=True, exist_ok=True)
-                  path.write_bytes(base64.b64decode(b64))
-                  print("wrote", rel, path.stat().st_size)
+          if not (bundle / "MANIFEST.json").exists():
+              print("no manifest"); raise SystemExit(0)
+          manifest = json.loads((bundle / "MANIFEST.json").read_text())
+          for item in manifest:
+              b64 = "".join((bundle / p).read_text().strip() for p in item["parts"])
+              path = root / item["path"]
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(base64.b64decode(b64))
+              print("wrote", item["path"], path.stat().st_size)
           PY
           rm -rf speaking-bundle
           git config user.name "github-actions[bot]"
