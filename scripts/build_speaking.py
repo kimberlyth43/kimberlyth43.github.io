@@ -101,6 +101,176 @@ SECTIONS = (
     ("Thoughts", "/thoughts/"),
 )
 
+# Same block on Writing, Speaking, Reading, and Thoughts. Tabs come after it.
+MASTHEAD = """    <section class="masthead">
+      <div class="avatar" role="img" aria-label="Nathan Colestock"></div>
+      <h1>Nathan Colestock</h1>
+      <div class="role">
+        <span>Pastor</span><span class="sep">·</span>
+        <span>Head of School</span><span class="sep">·</span>
+        <span>Husband &amp; father of four</span>
+      </div>
+      <p class="bio">
+        I serve as a pastor at
+        <a href="https://christtheking.build/" target="_blank" rel="noopener"><strong>Christ the King Church</strong></a>
+        and as Head of School at
+        <a href="https://valorcca.com/" target="_blank" rel="noopener"><strong>Valor Classical Academy</strong></a>.
+        My wife Maddie and I are raising four children.
+      </p>
+      <div class="meta-row">
+        <span class="place"><span class="pin" aria-hidden="true"></span> Stillwater, Minnesota</span>
+        <a class="x-link" href="https://x.com/build_n_fight" target="_blank" rel="noopener me" aria-label="Nathan Colestock on X" title="@build_n_fight on X">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span>@build_n_fight</span>
+        </a>
+      </div>
+    </section>"""
+
+TALK_JS = r"""<script>
+(function () {
+  var VIDEO_ID = "__VIDEO_ID__";
+  var player = null;
+  var cues = [];
+  var buttons = [];
+  var active = -1;
+  var scrollLock = 0;
+  var panel = document.getElementById("transcript-scroll");
+  var hint = document.getElementById("transcript-hint");
+  var smooth = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var FALLBACK = "No captions are available for this talk yet. The video still plays above.";
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function fmt(t) {
+    t = Math.max(0, Math.floor(t || 0));
+    var h = Math.floor(t / 3600);
+    var m = Math.floor((t % 3600) / 60);
+    var s = t % 60;
+    if (h) return h + ":" + pad(m) + ":" + pad(s);
+    return m + ":" + pad(s);
+  }
+  function showFallback(message) {
+    if (hint) hint.textContent = message;
+    if (!panel) return;
+    panel.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = "transcript-fallback";
+    p.textContent = message;
+    panel.appendChild(p);
+  }
+  function offsetWithin(el, ancestor) {
+    var y = 0;
+    var node = el;
+    while (node && node !== ancestor) {
+      y += node.offsetTop;
+      node = node.offsetParent;
+    }
+    return y;
+  }
+  function setActive(index, forceScroll) {
+    if (index === active && !forceScroll) return;
+    if (active >= 0 && buttons[active]) {
+      buttons[active].classList.remove("is-current");
+      buttons[active].removeAttribute("aria-current");
+    }
+    active = index;
+    if (index < 0 || !buttons[index]) return;
+    var el = buttons[index];
+    el.classList.add("is-current");
+    el.setAttribute("aria-current", "true");
+    if (!panel) return;
+    if (!forceScroll && Date.now() < scrollLock) return;
+    var top = offsetWithin(el, panel);
+    var target = top - (panel.clientHeight - el.offsetHeight) / 2;
+    var max = Math.max(0, panel.scrollHeight - panel.clientHeight);
+    if (target < 0) target = 0;
+    if (target > max) target = max;
+    panel.scrollTo({ top: target, behavior: forceScroll || !smooth ? "auto" : "smooth" });
+  }
+  function findCue(t) {
+    var lo = 0, hi = cues.length - 1, ans = -1;
+    while (lo <= hi) {
+      var mid = (lo + hi) >> 1;
+      if (cues[mid].start <= t + 0.08) { ans = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    if (ans < 0) return -1;
+    var cue = cues[ans];
+    if (t > cue.end + 0.35) {
+      var next = cues[ans + 1];
+      if (!next || t < next.start) {
+        if (next && (next.start - cue.end) < 1.25) return ans;
+        return -1;
+      }
+    }
+    return ans;
+  }
+  function tick() {
+    if (!player || typeof player.getCurrentTime !== "function" || !cues.length) return;
+    var t = player.getCurrentTime();
+    if (typeof t !== "number" || isNaN(t)) return;
+    setActive(findCue(t), false);
+  }
+  function render(list) {
+    if (!Array.isArray(list)) list = [];
+    cues = list.filter(function (c) {
+      return c && typeof c.start === "number" && typeof c.text === "string" && c.text.trim();
+    });
+    if (!cues.length) { showFallback(FALLBACK); return; }
+    if (hint) hint.textContent = "Follows the video. Click a line to jump.";
+    panel.innerHTML = "";
+    buttons = cues.map(function (cue, i) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cue";
+      var time = document.createElement("span");
+      time.className = "cue-time";
+      time.textContent = fmt(cue.start);
+      var text = document.createElement("span");
+      text.className = "cue-text";
+      text.textContent = cue.text;
+      btn.appendChild(time);
+      btn.appendChild(text);
+      btn.addEventListener("click", function () {
+        setActive(i, true);
+        scrollLock = Date.now() + 1600;
+        if (player && typeof player.seekTo === "function") {
+          player.seekTo(cue.start, true);
+          try { if (player.getPlayerState() !== 1) player.playVideo(); } catch (e) {}
+        }
+      });
+      panel.appendChild(btn);
+      return btn;
+    });
+    tick();
+  }
+  if (panel) {
+    ["wheel", "touchstart", "pointerdown"].forEach(function (name) {
+      panel.addEventListener(name, function () { scrollLock = Date.now() + 7000; }, { passive: true });
+    });
+    panel.addEventListener("keydown", function (e) {
+      if ({ArrowDown:1, ArrowUp:1, PageDown:1, PageUp:1, Home:1, End:1, " ":1}[e.key]) {
+        scrollLock = Date.now() + 7000;
+      }
+    });
+  }
+  window.onYouTubeIframeAPIReady = function () {
+    player = new YT.Player("yt-player", {
+      videoId: VIDEO_ID,
+      playerVars: { rel: 0, playsinline: 1, modestbranding: 1 },
+      events: { onReady: tick, onStateChange: tick }
+    });
+    setInterval(tick, 250);
+  };
+  var api = document.createElement("script");
+  api.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(api);
+  fetch("transcript.json", { credentials: "same-origin" })
+    .then(function (res) { if (!res.ok) throw new Error("missing"); return res.json(); })
+    .then(render)
+    .catch(function () { showFallback(FALLBACK); });
+})();
+</script>"""
+
 
 def esc(value: str) -> str:
     return html.escape(value, quote=True)
@@ -162,6 +332,12 @@ def load_talks() -> list[dict]:
                 raise SystemExit(f"conference talk should not carry scripture: {slug}")
         else:
             raise SystemExit(f"kind must be sermon or conference: {slug}")
+        snippet = (talk.get("snippet") or "").strip()
+        if not snippet or snippet == title:
+            raise SystemExit(f"talk needs its own snippet: {slug}")
+        if not 24 <= len(snippet) <= 200:
+            raise SystemExit(f"snippet length out of range for {slug}: {len(snippet)}")
+        talk["snippet"] = snippet
 
     raw.sort(key=lambda item: item["date"], reverse=True)
     return raw
@@ -226,18 +402,21 @@ def index_page(talks: list[dict]) -> str:
             items.append(
                 f'      <li class="speaking-year"><h2 class="speaking-year-label">{year}</h2></li>'
             )
-        scripture = ""
-        if talk["scripture"]:
-            scripture = f'\n            <p class="scripture">{esc(talk["scripture"])}</p>'
         kind = "Conference" if talk["kind"] == "conference" else "Sermon"
+        meta_bits = [f'<span class="tag">{kind}</span>']
+        if talk["scripture"]:
+            meta_bits.append(f'<span>{esc(talk["scripture"])}</span>')
+        meta_bits.append(
+            f'<time datetime="{esc(talk["date"])}">{esc(full_date(talk["date"]))}</time>'
+        )
         items.append(
             f"""      <li>
         <a class="post speaking-item" href="/speaking/{esc(talk["slug"])}/">
           <div class="speaking-date" aria-hidden="true"><span class="speaking-day">{esc(rail_day(talk["date"]))}</span></div>
           <div class="speaking-body">
-            <div class="meta"><span class="tag">{kind}</span><time datetime="{esc(talk["date"])}">{esc(full_date(talk["date"]))}</time></div>
-            <h3>{esc(talk["title"])}</h3>{scripture}
-            <span class="more">Watch →</span>
+            <div class="meta">{"".join(meta_bits)}</div>
+            <h3>{esc(talk["title"])}</h3>
+            <p class="dek">{esc(talk["snippet"])}</p>
           </div>
         </a>
       </li>"""
@@ -250,11 +429,12 @@ def index_page(talks: list[dict]) -> str:
 {THEME_BUTTON}
 <main class="view active" id="view-speaking">
   <div class="shell">
+{MASTHEAD}
 {tabs("Speaking")}
     <section class="speaking" aria-labelledby="speaking-h">
       <header class="page-head">
         <h1 class="page-title" id="speaking-h">Speaking</h1>
-        <p class="speaking-intro">Sermons and talks from Christ the King Church in Stillwater, newest first. Video on each page. Transcripts will follow.</p>
+        <p class="speaking-intro">Sermons and talks from Christ the King Church in Stillwater, newest first. The transcript on each page follows the video.</p>
       </header>
     <ul class="speaking-list">
 {body}
@@ -264,6 +444,19 @@ def index_page(talks: list[dict]) -> str:
   </div>
 </main>
 {chrome_close()}"""
+
+
+def cue_count(slug: str) -> int:
+    path = SPEAKING / slug / "transcript.json"
+    if not path.exists():
+        return 0
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return 0
+    if not isinstance(data, list):
+        return 0
+    return sum(1 for cue in data if isinstance(cue, dict) and cue.get("text"))
 
 
 def talk_page(talk: dict) -> str:
@@ -281,13 +474,45 @@ def talk_page(talk: dict) -> str:
         kicker = f"{when}. Men's pre-conference."
     video = talk["youtube"]
     watch = f"https://www.youtube.com/watch?v={video}"
+    has_cues = cue_count(talk["slug"]) > 0
+    if has_cues:
+        stage = f"""      <div class="talk-stage">
+        <div class="video-wrap">
+          <div id="yt-player"></div>
+        </div>
+        <section class="transcript" id="transcript" aria-labelledby="transcript-h">
+          <div class="transcript-bar">
+            <h2 id="transcript-h">Transcript</h2>
+            <p class="transcript-hint" id="transcript-hint">Loading the transcript…</p>
+          </div>
+          <div class="transcript-scroll" id="transcript-scroll" tabindex="0" aria-label="Transcript lines"></div>
+        </section>
+      </div>
+      <noscript>
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      </noscript>"""
+        player = "\n" + TALK_JS.replace("__VIDEO_ID__", video)
+    else:
+        stage = f"""      <div class="talk-stage">
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        <section class="transcript" id="transcript" aria-labelledby="transcript-h">
+          <div class="transcript-bar">
+            <h2 id="transcript-h">Transcript</h2>
+          </div>
+          <p class="transcript-fallback">No captions are available for this talk yet. The video still plays above.</p>
+        </section>
+      </div>"""
+        player = ""
     return f"""{head(title, description, f"/speaking/{talk['slug']}/")}
 <body>
 <div id="mapbg" aria-hidden="true"></div>
 {THEME_BUTTON}
 <main class="view active">
-  <div class="shell">
-{tabs("Speaking")}
+  <div class="shell shell-talk">
     <a class="backlink" href="/speaking/">← Speaking</a>
     <article class="speaking-talk">
       <header class="art-head">
@@ -300,18 +525,13 @@ def talk_page(talk: dict) -> str:
       </header>
       <p class="speaking-kicker">{esc(kicker)}</p>
       <div class="rule"></div>
-      <div class="video-wrap">
-        <iframe src="https://www.youtube.com/embed/{esc(video)}" title="{esc(title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="eager" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-      </div>
-      <section class="transcript" id="transcript" aria-labelledby="transcript-h">
-        <h2 id="transcript-h">Transcript</h2>
-        <p class="transcript-placeholder">A cleaned transcript will be added from the manuscript.</p>
-      </section>
+{stage}
       <p class="speaking-note">Watch on <a href="{esc(watch)}" target="_blank" rel="noopener">YouTube</a>.</p>
     </article>
     <footer class="home-foot">© 2026 Nathan Colestock</footer>
   </div>
 </main>
+{player}
 {chrome_close()}"""
 
 
